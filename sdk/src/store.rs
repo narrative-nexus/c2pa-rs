@@ -1635,8 +1635,23 @@ impl Store {
                 .failure_as_err(validation_log, e)
             })?;
 
-            // we don't care about InputTo ingredients
-            if ingredient_assertion.relationship == Relationship::InputTo {
+            // Skipping `inputTo` here returns BEFORE the referenced manifest is
+            // read, so that branch is left unvalidated rather than merely
+            // unrecorded.
+            //
+            // C2PA 2.2's ingredient walk (§15.11 step 6.a) makes the exemption
+            // narrower than this: step 6.a.ii recurses into any ingredient
+            // assertion carrying an `activeManifest` field, with no
+            // relationship condition, and the `inputTo` exemption appears only
+            // in step 6.a.iii — which applies to assertions that have NO
+            // `activeManifest`, and only suppresses the
+            // `ingredient.unknownProvenance` informational code.
+            //
+            // Gated on a setting rather than changed outright, so the default
+            // reproduces the previous behaviour exactly.
+            if ingredient_assertion.relationship == Relationship::InputTo
+                && !settings.verify.verify_input_to_ingredients
+            {
                 continue;
             }
 

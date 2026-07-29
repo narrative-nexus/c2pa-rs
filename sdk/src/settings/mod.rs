@@ -414,6 +414,23 @@ pub struct Verify {
     /// See more information in the spec here:
     /// [versioning_manifests_due_to_conflicts - C2PA Technical Specification](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#_versioning_manifests_due_to_conflicts)
     pub(crate) skip_ingredient_conflict_resolution: bool,
+    /// Whether to run the validation algorithm on ingredient assertions whose
+    /// relationship is `inputTo`.
+    ///
+    /// The default value is false, which preserves the historical behaviour of
+    /// skipping such assertions entirely.
+    ///
+    /// Set it to true when acting as a claim generator ingesting another
+    /// party's asset. C2PA 2.2 §15.2.1 requires the full validation algorithm
+    /// to be performed on an ingredient, and §18.15.12.4.3 item 2 requires
+    /// `ingredientDeltas` "for every ingredient assertion, that contains an
+    /// activeManifest field, in every manifest in the ingredient's C2PA
+    /// Manifest Store" — neither of which carves out `inputTo`.
+    ///
+    /// Enabling it when validating your own output will fold an ingredient's
+    /// trust status into your manifest's validation state, which is usually not
+    /// what a claim generator wants; see the pull request for discussion.
+    pub(crate) verify_input_to_ingredients: bool,
     /// Whether to do strictly C2PA v1 validation or otherwise the latest validation.
     ///
     /// The default value is false.
@@ -432,6 +449,7 @@ impl Default for Verify {
             ocsp_fetch: false,
             remote_manifest_fetch: true,
             skip_ingredient_conflict_resolution: false,
+            verify_input_to_ingredients: false,
             strict_v1_validation: false,
         }
     }
